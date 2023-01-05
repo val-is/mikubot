@@ -6,7 +6,24 @@ import uuid
 import time
 import re
 import random
+import nltk
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
+
+class SentimentAnalyzer:
+    def __init__(self):
+        self.sid = SentimentIntensityAnalyzer()
+
+    def analyze(self, text: str) -> str:
+        scores = self.sid.polarity_scores(text)
+        if scores['compound'] > 0.5:
+            return "_positive"
+        elif scores['compound'] < -0.5:
+            return "_negative"
+        else:
+            return "_neutral"
+
+    
 intents = discord.Intents.default()
 intents.message_content = True
 
@@ -52,6 +69,14 @@ async def on_message(message):
         text = re.sub(sanitize, '', text)
         text = text[:150]
         print(text)
+        
+        ### NLTK HERE ###
+        nltk_obj = SentimentAnalyzer()
+        categorization = nltk_obj.analyze(text)
+
+        sentiment_folder = miku_folder + "/" + categorization
+
+
         if " $ " in text: top, bottom = text.split(" $ ", 1)
         else: top = text; bottom = ""
 
@@ -61,7 +86,7 @@ async def on_message(message):
         cmd_run = cmd_template.replace("$TOPTEXT", top)
         cmd_run = cmd_run.replace("$BOTTOMTEXT", bottom)
 
-        file = random.choice([x for x in os.listdir(miku_folder) if os.path.isfile(os.path.join(miku_folder, x))])
+        file = random.choice([x for x in os.listdir(sentiment_folder) if os.path.isfile(os.path.join(miku_folder, x))])
         file = f"{miku_folder}/{file}"
         cmd_run = cmd_run.replace("$INFILE", file)
         
